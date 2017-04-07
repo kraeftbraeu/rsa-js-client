@@ -1,0 +1,98 @@
+﻿<!DOCTYPE HTML>
+<html lang="de">
+<head>
+	<meta charset="utf-8"/>
+	<style>
+		div { border: 1px solid black; }
+	</style>
+	<script src='http://code.jquery.com/jquery-latest.min.js' type='text/javascript'></script>
+	<script src='jsrsasign-latest-all-min.js' type='text/javascript'></script>
+	<script type="text/javascript">
+	
+		function encrypt(username, password)
+		{
+			var pb = "-----BEGIN PUBLIC KEY-----MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtGpfxguFGpDGAQTItC7HJj3X2w2V69oZxLVtIeHIs1macJHHe4k5tEvTFYMAigodu5IRTWoBb/ZGY7gQJ2XeNJSb9pVE4kc7fZhqIQkDO4udtZHrVcs6fqAKmbKSGUq64VW/sTj1GYU74xDS97Lw4V6mwkZLl84tqggp8YtHWU9oyGsH3Ujgo3YM9VajWGawSg8el5SNskP77N8+BiDevYHumxHV3o/Rulu7J9wEEQrne7VVwWsy7fmWe2dfKInRytiYYOsMgPuc+DJorbsJTgdv1cI8sQSYpWtL1doG1waGI4B1A4KiNnf1zrC6b5qWdsMY6PIF/8hzFUGa0HCAswIDAQAB-----END PUBLIC KEY-----";
+			var key = ASN1HEX.pemToHex(pb);
+			//var key = b64tohex(RSAKey.pemToBase64(pb)); // falsch
+			var Nstr = key.substr(64, 514);
+			var estr = key.substr(-6);
+			
+			//$("#divsuccess").append("<p>hex= ").append(key).append("</p>");
+			//$("#divsuccess").append("<p>N=").append(Nstr).append("</p>");
+			//$("#divsuccess").append("<p>e=").append(estr).append("</p>");
+		
+			//var Nstr = "00b46a5fc60b851a90c60104c8b42ec7263dd7db0d95ebda19c4b56d21e1c8b3599a7091c77b8939b44bd31583008a0a1dbb92114d6a016ff64663b8102765de34949bf69544e2473b7d986a2109033b8b9db591eb55cb3a7ea00a99b292194abae155bfb138f519853be310d2f7b2f0e15ea6c2464b97ce2daa0829f18b47594f68c86b07dd48e0a3760cf556a35866b04a0f1e97948db243fbecdf3e0620debd81ee9b11d5de8fd1ba5bbb27dc04110ae77bb555c16b32edf9967b675f2889d1cad89860eb0c80fb9cf83268adbb094e076fd5c23cb10498a56b4bd5da06d706862380750382a23677f5ceb0ba6f9a9676c318e8f205ffc87315419ad07080b3";
+			//var estr = "10001";
+			var rsa = new RSAKey();
+			rsa.setPublic(Nstr, estr);
+			return rsa.encrypt(username + "\n" + password + "\n" + Date.now());
+		}
+		
+		function doLogin()
+		{
+			$("#divsuccess").html("<h3>success</h3>");
+			$("#diverror").html("<h3>error</h3>");
+			
+			var u = ($("#username").val());
+			var p = ($("#password").val());
+			u = "Krämer";
+			p = "Äaw4ktcü24005tcmi";
+			var encrypted = encrypt(u, p);
+			$.ajax({
+				url: "http://localhost/rsalogin/login.php",
+				data : {encrypted: encrypted},
+				dataType: "json",
+				type: "POST",
+				success: function(data, textstatus, jqxhr) {
+					$("#divsuccess").append(
+						$("<table/>").append(
+							$("<tr/>").append(
+								$("<td/>").text("Benutzername"),
+								$("<td/>").text(data.user)
+							),
+							$("<tr/>").append(
+								$("<td/>").text("Passwort"),
+								$("<td/>").text(data.pass)
+							),
+							$("<tr/>").append(
+								$("<td/>").text("Gültig"),
+								$("<td/>").text(data.valid)
+							)
+						)
+					);
+					/*$("#divsuccess").append("data: " + data 
+									 + "<br/>data.stringify: " + JSON.stringify(data)
+									 );//*/
+				},
+				error: function(jqxhr, textstatus, errorthrown) {
+					$("#diverror").append("textstatus: " + textstatus 
+					
+									+ "<br/>jqxhr: " + jqxhr
+									+ "<br/>jqxhr.status: " + jqxhr.status
+									+ "<br/>jqxhr.readyState: " + jqxhr.readyState
+									+ "<br/>jqxhr.responseText: " + jqxhr.responseText
+									
+									+ "<br/>errorthrown: " + errorthrown);
+					if(jqxhr === undefined)
+						$("#diverror").append("<br/>response undefined", jqxhr);
+					else if(jqxhr.cod === undefined)
+						$("#diverror").append("<br/>response code undefined", jqxhr);
+					else if(jqxhr.cod !== "200")
+						$("#diverror").append("<br/>response code is " + jqxhr.cod + ", but should be 200", jqxhr);
+				}
+			});
+		}
+	</script>
+</head>
+<body>
+	<div id="logindiv">
+		<form name="loginform">
+			<input type="text" name="username" id="username" placeholder="Benutzername" />
+			<input type="password" name="password" id="password" placeholder="Passwort" />
+		</form>
+		<button onclick="doLogin();">Login!</button>
+	</div>
+	<div id="divsuccess"></div>
+	<div id="diverror"></div>
+</body>
+</html>
