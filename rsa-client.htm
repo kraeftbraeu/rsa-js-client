@@ -1,0 +1,80 @@
+﻿<!DOCTYPE HTML>
+<html lang="de">
+<head>
+	<meta charset="utf-8"/>
+	<style>
+		div { border: 1px solid black; }
+	</style>
+	<script src='http://code.jquery.com/jquery-latest.min.js' type='text/javascript'></script>
+	<script type="text/javascript" src="jsbn.js"></script>
+	<script type="text/javascript" src="prng4.js"></script>
+	<script type="text/javascript" src="rng.js"></script>
+	<script type="text/javascript" src="rsa.js"></script>
+	<script type="text/javascript">
+	
+		function encrypt(username, password)
+		{
+			var Nstr = "81818f464f217191b3dec5d39ab69d851d11043cc107a7a754dbbd47ed0cbaacfe5efcbd8eda1de838a15f34739dffc8fb62c00be385c6d4f5d2ac65c1d3a30c9f8c61442862d2b91ecbc94b8621057b642fcd459f9471dcf6b7c6ded0837d38b579b0a11bfcfdfaab468620edff75393d40f2a209e4d284819f05b38e38939c4ca2a21cad67b1fded2ff78602092fd53273d620b5d5f21760e60f8687b0a5970fdfcca198c7413bc90f26d2994d62e3f89a1932e4e9ea0a857b948613b673f3aba2fecb567d9b8cac3856444be36e7dcad6ad8f226254d3a62a94c4c6f4aaccb2105b9f4b4717cc6b8bba84a887a8b8cecc8a941d17dfd3fb1d9ffb0836915d";
+			var estr = "10001";
+			var rsa = new RSAKey();
+			rsa.setPublic(Nstr, estr);
+			return rsa.encrypt(username + "\r\n" + password + "\r\n" + Date.now());
+		}
+		
+		function doLogin()
+		{
+			$("#divsuccess").html("<h3>success</h3>");
+			$("#diverror").html("<h3>error</h3>");
+			
+			var u = ($("#username").val());
+			var p = ($("#password").val());
+			var encrypted = encrypt(u, p);
+			$.ajax({
+				url: "http://localhost:80/login",
+				data : {encrypted: encrypted},
+				dataType: "json",
+				type: "POST",
+				success: function(data, textstatus, jqxhr) {
+					$("#divsuccess").append("data: " + data 
+									 + "<br/>data.stringify: " + JSON.stringify(data)
+									 
+									 + "<br/>textstatus: " + textstatus 
+									 
+									 + "<br/>jqxhr: " + jqxhr
+									 + "<br/>jqxhr.status: " + jqxhr.status
+									 + "<br/>jqxhr.readyState: " + jqxhr.readyState
+									 + "<br/>jqxhr.responseText: " + jqxhr.responseText
+									 );
+				},
+				error: function(jqxhr, textstatus, errorthrown) {
+					$("#diverror").append("textstatus: " + textstatus 
+					
+									+ "<br/>jqxhr: " + jqxhr
+									+ "<br/>jqxhr.status: " + jqxhr.status
+									+ "<br/>jqxhr.readyState: " + jqxhr.readyState
+									+ "<br/>jqxhr.responseText: " + jqxhr.responseText
+									
+									+ "<br/>errorthrown: " + errorthrown);
+					if(jqxhr === undefined)
+						$("#diverror").append("<br/>response undefined", jqxhr);
+					else if(jqxhr.cod === undefined)
+						$("#diverror").append("<br/>response code undefined", jqxhr);
+					else if(jqxhr.cod !== "200")
+						$("#diverror").append("<br/>response code is " + jqxhr.cod + ", but should be 200", jqxhr);
+				}
+			});
+		}
+	</script>
+</head>
+<body>
+	<div id="logindiv">
+		<form name="loginform">
+			<input type="text" name="username" id="username" placeholder="Benutzername" />
+			<input type="password" name="password" id="password" placeholder="Passwort" />
+		</form>
+		<button onclick="doLogin();">Login!</button>
+	</div>
+	<div id="divsuccess"></div>
+	<div id="diverror"></div>
+</body>
+</html>
