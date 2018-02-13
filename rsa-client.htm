@@ -3,7 +3,9 @@
 <head>
 	<meta charset="utf-8"/>
 	<style>
-		div { border: 1px solid black; }
+		div { border: 1px solid black; border-collapse: collapse; }
+		td { border: 1px solid lightgray; }
+		table { margin: 10px; border-collapse: collapse; }
 	</style>
 	<script src='http://code.jquery.com/jquery-latest.min.js' type='text/javascript'></script>
 	<script type="text/javascript" src="jsbn.js"></script>
@@ -23,9 +25,6 @@
 		
 		function doLogin()
 		{
-			$("#divsuccess").html("<h3>success</h3>");
-			$("#diverror").html("<h3>error</h3>");
-			
 			var u = ($("#username").val());
 			var p = ($("#password").val());
 			var encrypted = encrypt(u, p);
@@ -35,34 +34,57 @@
 				dataType: "json",
 				type: "POST",
 				success: function(data, textstatus, jqxhr) {
-					$("#divsuccess").append("data: " + data 
-									 + "<br/>data.stringify: " + JSON.stringify(data)
-									 
-									 + "<br/>textstatus: " + textstatus 
-									 
-									 + "<br/>jqxhr: " + jqxhr
-									 + "<br/>jqxhr.status: " + jqxhr.status
-									 + "<br/>jqxhr.readyState: " + jqxhr.readyState
-									 + "<br/>jqxhr.responseText: " + jqxhr.responseText
-									 );
+					$("#resultdiv").html("");
+					$("#resultdiv").append(
+						$("<h3>").html("success"),
+						createTable({
+							"data": data,
+							"data.stringify": JSON.stringify(data),
+							"textstatus": textstatus,
+							"jqxhr": jqxhr,
+							"jqxhr.status": jqxhr.status,
+							"jqxhr.readyState": jqxhr.readyState,
+							"jqxhr.responseText": jqxhr.responseText,
+						})
+					);
 				},
 				error: function(jqxhr, textstatus, errorthrown) {
-					$("#diverror").append("textstatus: " + textstatus 
-					
-									+ "<br/>jqxhr: " + jqxhr
-									+ "<br/>jqxhr.status: " + jqxhr.status
-									+ "<br/>jqxhr.readyState: " + jqxhr.readyState
-									+ "<br/>jqxhr.responseText: " + jqxhr.responseText
-									
-									+ "<br/>errorthrown: " + errorthrown);
+					var table = createTable({
+							"textstatus": textstatus,
+							"jqxhr": jqxhr,
+							"jqxhr.status": jqxhr.status,
+							"jqxhr.readyState": jqxhr.readyState,
+							"jqxhr.responseText": jqxhr.responseText,
+							"errorthrown": errorthrown
+						});
 					if(jqxhr === undefined)
-						$("#diverror").append("<br/>response undefined", jqxhr);
+						table["response undefined"] = jqxhr;
 					else if(jqxhr.cod === undefined)
-						$("#diverror").append("<br/>response code undefined", jqxhr);
+						table["response code undefined"] = jqxhr;
 					else if(jqxhr.cod !== "200")
-						$("#diverror").append("<br/>response code is " + jqxhr.cod + ", but should be 200", jqxhr);
+						table["response code is " + jqxhr.cod + ", but should be 200"] = jqxhr;
+					
+					$("#resultdiv").html("");
+					$("#resultdiv").append(
+						$("<h3>").html("error"),
+						table
+					);
 				}
 			});
+		}
+		
+		function createTable(tablearray)
+		{
+			let table = $("<table>");
+			$.each(tablearray, function(key, value) {
+				let row = $("<tr>");
+				row.append(
+					$("<td>").html(key),
+					$("<td>").html(value)
+				);
+				table.append(row);
+			});
+			return table;
 		}
 	</script>
 </head>
@@ -74,7 +96,6 @@
 		</form>
 		<button onclick="doLogin();">Login!</button>
 	</div>
-	<div id="divsuccess"></div>
-	<div id="diverror"></div>
+	<div id="resultdiv" />
 </body>
 </html>
