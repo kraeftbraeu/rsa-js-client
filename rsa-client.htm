@@ -26,13 +26,11 @@
 			$("#divsuccess").html("<h3>success</h3>");
 			$("#diverror").html("<h3>error</h3>");
 			
-			var server = "http://localhost:8080";
-			
 			var u = ($("#username").val());
 			var p = ($("#password").val());
 			var encrypted = encrypt(u, p);
 			$.ajax({
-				url: server + "/login",
+				url: "/login",
 				data : {encrypted: encrypted},
 				dataType: "json",
 				type: "POST",
